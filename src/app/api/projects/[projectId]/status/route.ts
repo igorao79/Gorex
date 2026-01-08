@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { ProjectStatus } from "@/generated/prisma/enums"
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     console.log("=== STATUS UPDATE API CALLED ===")

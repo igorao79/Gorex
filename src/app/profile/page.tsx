@@ -13,7 +13,6 @@ import { Camera, Save, User } from "lucide-react"
 import { NotificationModal } from "@/components/ui/notification-modal"
 
 // import { toast } from "sonner" // Removed unused import
-import { toast } from "sonner"
 
 interface UserProfile {
   id: string
