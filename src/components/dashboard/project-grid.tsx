@@ -1,16 +1,21 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Users, Calendar } from "lucide-react"
+import { Plus } from "lucide-react"
+import { ProjectCard } from "./project-card"
+import { CreateProjectModal } from "./create-project-modal"
 
 interface Project {
   id: string
   name: string
   description: string | null
   createdAt: string
+  creator: {
+    name: string | null
+    email: string
+  }
   _count: {
     members: number
     tasks: number
@@ -24,12 +29,27 @@ interface ProjectGridProps {
 export function ProjectGrid({ userId }: ProjectGridProps) {
   const [projects, setProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   useEffect(() => {
-    // TODO: Fetch projects from API
-    // For now, showing empty state
-    setIsLoading(false)
+    fetchProjects()
   }, [userId])
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch("/api/projects")
+      if (response.ok) {
+        const projectsData = await response.json()
+        setProjects(projectsData)
+      } else {
+        console.error("Failed to fetch projects")
+      }
+    } catch (error) {
+      console.error("Error fetching projects:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -62,10 +82,27 @@ export function ProjectGrid({ userId }: ProjectGridProps) {
         <p className="text-slate-600 mb-6">
           Создайте свой первый проект для начала работы с задачами
         </p>
-        <Button>
+        <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Создать проект
         </Button>
+        <CreateProjectModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          userId={userId}
+          onProjectCreated={(newProject) => {
+            // Transform to full Project type
+            const fullProject: Project = {
+              ...newProject,
+              creator: {
+                name: "Вы", // Current user is the creator
+                email: "", // We don't need email here
+              },
+            }
+            setProjects(prev => [...prev, fullProject])
+            setShowCreateModal(false)
+          }}
+        />
       </div>
     )
   }
@@ -74,7 +111,7 @@ export function ProjectGrid({ userId }: ProjectGridProps) {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-slate-900">Мои проекты</h2>
-        <Button>
+        <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Создать проект
         </Button>
@@ -82,36 +119,31 @@ export function ProjectGrid({ userId }: ProjectGridProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.map((project) => (
-          <Card key={project.id} className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader>
-              <CardTitle className="text-lg">{project.name}</CardTitle>
-              <CardDescription>
-                {project.description || "Описание проекта"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between text-sm text-slate-600">
-                <div className="flex items-center">
-                  <Users className="w-4 h-4 mr-1" />
-                  {project._count.members} участников
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {new Date(project.createdAt).toLocaleDateString("ru-RU")}
-                </div>
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <Badge variant="secondary">
-                  {project._count.tasks} задач
-                </Badge>
-                <Button variant="ghost" size="sm">
-                  Открыть
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ProjectCard
+            key={project.id}
+            project={project}
+            userId={userId}
+            onUpdate={fetchProjects}
+          />
         ))}
       </div>
+      <CreateProjectModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        userId={userId}
+        onProjectCreated={(newProject) => {
+          // Transform to full Project type
+          const fullProject: Project = {
+            ...newProject,
+            creator: {
+              name: "Вы", // Current user is the creator
+              email: "", // We don't need email here
+            },
+          }
+          setProjects(prev => [...prev, fullProject])
+          setShowCreateModal(false)
+        }}
+      />
     </div>
   )
 }

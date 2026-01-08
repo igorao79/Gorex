@@ -18,6 +18,7 @@ declare module "next-auth" {
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -78,7 +79,6 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 60, // 30 минут
-    updateAge: 24 * 60 * 60, // 24 часа
   },
   pages: {
     signIn: "/auth/signin",
@@ -98,5 +98,16 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     }
-  }
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 }

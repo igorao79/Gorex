@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -38,11 +39,11 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
     <header className="border-b bg-white">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Gorex</h1>
+          <Link href="/" className="text-2xl font-bold text-slate-900">
+            Gorex
+          </Link>
 
           <div className="flex items-center space-x-4">
-            <Button>Создать проект</Button>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">

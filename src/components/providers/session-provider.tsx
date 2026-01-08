@@ -8,12 +8,7 @@ export function SessionProvider({
   children: React.ReactNode
 }) {
   return (
-    <NextAuthSessionProvider
-      session={null}
-      baseUrl={process.env.NEXTAUTH_URL}
-      refetchInterval={0}
-      refetchOnWindowFocus={false}
-    >
+    <NextAuthSessionProvider>
       {children}
     </NextAuthSessionProvider>
   )
