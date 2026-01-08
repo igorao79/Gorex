@@ -20,6 +20,8 @@ export function Header() {
   const [showSignIn, setShowSignIn] = useState(false)
   const [showSignUp, setShowSignUp] = useState(false)
 
+
+
   const handleSignOut = async () => {
     await signOut({ redirect: false })
     // Сессия обновится автоматически через SessionProvider
@@ -44,34 +46,40 @@ export function Header() {
               Gorex
             </Link>
 
-            <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link
+              href="/"
+              className="text-slate-600 hover:text-slate-900 transition-colors font-semibold"
+            >
+              Главная
+            </Link>
+            <Link
+              href="/features"
+              className="text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Возможности
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Тарифы
+            </Link>
+            <Link
+              href="/about"
+              className="text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              О нас
+            </Link>
+            {session?.user && (
               <Link
-                href="#features"
+                href="/dashboard"
                 className="text-slate-600 hover:text-slate-900 transition-colors"
               >
-                Возможности
+                Dashboard
               </Link>
-              <Link
-                href="#pricing"
-                className="text-slate-600 hover:text-slate-900 transition-colors"
-              >
-                Тарифы
-              </Link>
-              <Link
-                href="#about"
-                className="text-slate-600 hover:text-slate-900 transition-colors"
-              >
-                О нас
-              </Link>
-              {session?.user && (
-                <Link
-                  href="/dashboard"
-                  className="text-slate-600 hover:text-slate-900 transition-colors"
-                >
-                  Dashboard
-                </Link>
-              )}
-            </nav>
+            )}
+          </nav>
 
             <div className="flex items-center space-x-4">
               {status === "loading" ? (

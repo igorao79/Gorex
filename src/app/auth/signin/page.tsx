@@ -15,7 +15,6 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {

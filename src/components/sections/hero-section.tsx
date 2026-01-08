@@ -23,10 +23,13 @@ export function HeroSection() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>
-              <Link href="/auth/signup">Начать бесплатно</Link>
+              <Link href="/pricing">Начать бесплатно</Link>
             </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link href="/auth/signin">Войти в аккаунт</Link>
+            <Button variant="outline" size="lg" onClick={() => {
+              const event = new CustomEvent('open-signin-modal')
+              window.dispatchEvent(event)
+            }}>
+              Войти в аккаунт
             </Button>
           </div>
         </div>

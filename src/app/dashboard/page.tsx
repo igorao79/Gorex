@@ -3,7 +3,12 @@ import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { ProjectGrid } from "@/components/dashboard/project-grid"
-import { headers } from "next/headers"
+
+declare module "next-auth" {
+  interface User {
+    id: string
+  }
+}
 
 export default async function Dashboard() {
   console.log("Dashboard: Checking session...")
