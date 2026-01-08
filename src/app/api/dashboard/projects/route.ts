@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next"
 import { NextResponse } from "next/server"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { Project } from "@prisma/client"
 
 export async function GET() {
   try {
@@ -37,10 +38,10 @@ export async function GET() {
     })
 
     console.log("Found projects:", projects.length)
-    projects.forEach((project, index) => {
+    projects.forEach((project: any, index: number) => {
       console.log(`Project ${index + 1}: ${project.name} (ID: ${project.id})`)
       console.log(`  Tasks count: ${project.tasks.length}`)
-      project.tasks.forEach((task, taskIndex) => {
+      project.tasks.forEach((task: any, taskIndex: number) => {
         console.log(`  Task ${taskIndex + 1}: ID=${task.id}, status="${task.status}"`)
       })
     })

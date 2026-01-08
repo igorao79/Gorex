@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { ProjectStatus } from "@/generated/prisma/enums"
+import { ProjectStatus } from "@prisma/client"
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
