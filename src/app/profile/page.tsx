@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera, Save, User } from "lucide-react"
+import { NotificationModal } from "@/components/ui/notification-modal"
+
+// import { toast } from "sonner" // Removed unused import
 import { toast } from "sonner"
 
 interface UserProfile {
@@ -32,6 +35,17 @@ export default function ProfilePage() {
     confirmPassword: "",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [notification, setNotification] = useState<{
+    isOpen: boolean
+    type: "success" | "error" | "warning" | "info"
+    title: string
+    message: string
+  }>({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+  })
 
   useEffect(() => {
     if (status === "loading") return
@@ -51,11 +65,21 @@ export default function ProfilePage() {
         setProfile(data)
         setFormData(prev => ({ ...prev, name: data.name || "" }))
       } else {
-        alert("Ошибка при загрузке профиля")
+        setNotification({
+          isOpen: true,
+          type: "error",
+          title: "Ошибка",
+          message: "Ошибка при загрузке профиля"
+        })
       }
     } catch (error) {
       console.error("Error fetching profile:", error)
-      alert("Ошибка при загрузке профиля")
+      setNotification({
+        isOpen: true,
+        type: "error",
+        title: "Ошибка",
+        message: "Ошибка при загрузке профиля"
+      })
     } finally {
       setIsLoading(false)
     }
@@ -114,20 +138,46 @@ export default function ProfilePage() {
           confirmPassword: "",
         }))
 
-        // Обновить сессию
-        await update({ name: formData.name.trim() })
+        // Update local profile state
+        setProfile(prev => prev ? { ...prev, name: formData.name.trim() } : null)
 
-        alert("Профиль успешно обновлен")
+        // Update session - это вызовет JWT callback с trigger "update"
+        if (session) {
+          await update({
+            ...session,
+            user: {
+              ...session.user,
+              name: formData.name.trim()
+            }
+          })
+        }
+
+        setNotification({
+          isOpen: true,
+          type: "success",
+          title: "Успех",
+          message: "Профиль успешно обновлен"
+        })
       } else {
         if (data.error.includes("пароль")) {
           setErrors({ currentPassword: data.error })
         } else {
-          alert(data.error || "Ошибка при сохранении профиля")
+          setNotification({
+            isOpen: true,
+            type: "error",
+            title: "Ошибка",
+            message: data.error || "Ошибка при сохранении профиля"
+          })
         }
       }
     } catch (error) {
       console.error("Error updating profile:", error)
-      alert("Ошибка при сохранении профиля")
+      setNotification({
+        isOpen: true,
+        type: "error",
+        title: "Ошибка",
+        message: "Ошибка при сохранении профиля"
+      })
     } finally {
       setIsSaving(false)
     }
@@ -293,6 +343,15 @@ export default function ProfilePage() {
           </Card>
         </div>
       </main>
+
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
     </div>
   )
 }
+    

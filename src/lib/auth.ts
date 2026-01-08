@@ -87,29 +87,63 @@ export const authOptions: NextAuthOptions = {
     signIn: "/",
   },
   callbacks: {
-    jwt: async ({ token, user }) => {
-      console.log("JWT callback:", { token, user })
+    jwt: async ({ token, user, trigger, session }) => {
+      console.log("JWT callback:", { token, user, trigger })
+
       if (user) {
+        // При логине - устанавливаем данные из user
         token.id = user.id
+        token.name = user.name
+        token.email = user.email
         token.tarif = user.tarif
       }
+
+      // При update() - обновляем токен новыми данными
+      if (trigger === "update" && session?.user) {
+        console.log("JWT update triggered with:", session.user)
+        token.name = session.user.name
+        token.email = session.user.email
+        // Обновляем тариф из БД при update
+        try {
+          const freshUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { name: true, email: true, tarif: true, image: true }
+          })
+          if (freshUser) {
+            token.name = freshUser.name
+            token.email = freshUser.email
+            token.tarif = freshUser.tarif
+            token.picture = freshUser.image
+          }
+        } catch (error) {
+          console.error("Error updating JWT token:", error)
+        }
+      }
+
       return token
     },
     session: async ({ session, token }) => {
       console.log("Session callback:", { session, token })
       if (token && session.user) {
         session.user.id = token.id as string
+        session.user.name = token.name as string
+        session.user.email = token.email as string
+        session.user.image = token.picture as string
 
-        // Всегда получаем свежий тариф из базы данных
+        // Всегда получаем свежий тариф из базы данных для консистентности
         try {
           const user = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { tarif: true }
+            select: { name: true, email: true, tarif: true, image: true }
           })
-          session.user.tarif = user?.tarif || 'free'
-          console.log("Fresh tarif from DB:", session.user.tarif)
+          if (user) {
+            session.user.name = user.name
+            session.user.email = user.email
+            session.user.tarif = user.tarif
+            session.user.image = user.image
+          }
         } catch (error) {
-          console.error("Error fetching fresh tarif:", error)
+          console.error("Error fetching fresh user data:", error)
           session.user.tarif = token.tarif as string || 'free'
         }
       }

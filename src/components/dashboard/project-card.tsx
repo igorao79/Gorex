@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { NotificationModal } from "@/components/ui/notification-modal"
 
 // Функция для правильного склонения слова "участник"
 function getMembersText(count: number): string {
@@ -56,6 +57,17 @@ export function ProjectCard({ project, userId, onUpdate }: ProjectCardProps) {
   const [showDetails, setShowDetails] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [notification, setNotification] = useState<{
+    isOpen: boolean
+    type: "success" | "error" | "warning" | "info"
+    title: string
+    message: string
+  }>({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+  })
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -69,11 +81,21 @@ export function ProjectCard({ project, userId, onUpdate }: ProjectCardProps) {
       } else {
         const error = await response.json()
         console.error("Failed to delete project:", error.error)
-        alert("Ошибка при удалении проекта: " + error.error)
+        setNotification({
+          isOpen: true,
+          type: "error",
+          title: "Ошибка",
+          message: "Ошибка при удалении проекта: " + error.error
+        })
       }
     } catch (error) {
       console.error("Error deleting project:", error)
-      alert("Произошла ошибка при удалении проекта")
+      setNotification({
+        isOpen: true,
+        type: "error",
+        title: "Ошибка",
+        message: "Произошла ошибка при удалении проекта"
+      })
     } finally {
       setIsDeleting(false)
       setShowDeleteDialog(false)
@@ -189,6 +211,14 @@ export function ProjectCard({ project, userId, onUpdate }: ProjectCardProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
     </>
   )
 }
