@@ -40,7 +40,10 @@ export default function SignIn() {
       if (result?.error) {
         setError("Неверный email или пароль")
       } else {
-        router.push("/dashboard")
+        setSuccessMessage("Вход выполнен успешно! Перенаправление через 5 секунд...")
+        setTimeout(() => {
+          window.location.href = "/dashboard"
+        }, 5000) // Увеличена задержка до 5 секунд
       }
     } catch (error) {
       setError("Произошла ошибка при входе")

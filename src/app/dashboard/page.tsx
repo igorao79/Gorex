@@ -1,15 +1,21 @@
-import getServerSession from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { ProjectGrid } from "@/components/dashboard/project-grid"
+import { headers } from "next/headers"
 
 export default async function Dashboard() {
+  console.log("Dashboard: Checking session...")
   const session = await getServerSession(authOptions)
+  console.log("Dashboard: Session result:", session)
 
   if (!session?.user) {
+    console.log("Dashboard: No session, redirecting to signin")
     redirect("/auth/signin")
   }
+
+  console.log("Dashboard: Session found for user:", session.user.email)
 
   return (
     <div className="min-h-screen bg-slate-50">
