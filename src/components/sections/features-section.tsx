@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-20 px-4 bg-background">
+    <section id="features" className="py-15 px-4 bg-background">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-heading text-foreground mb-4">

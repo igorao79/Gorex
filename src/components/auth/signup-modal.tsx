@@ -119,27 +119,33 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
     setEmail(newEmail)
     setError("")
 
-    // Сначала проверяем формат локально
-    validateEmailFormat(newEmail)
-
-    // Если формат правильный, проверяем через API
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (emailRegex.test(newEmail.trim())) {
-      // Проверяем email с небольшой задержкой
-      if (emailTimeoutRef.current) {
-        clearTimeout(emailTimeoutRef.current)
-      }
-
-      emailTimeoutRef.current = setTimeout(() => {
-        if (newEmail.trim()) {
-          checkEmailExists(newEmail)
-        }
-      }, 1500)
-    } else {
-      // Формат неправильный - очищаем состояния API проверки
-      setEmailExists(null)
-      setCheckingEmail(false)
+    // Очищаем предыдущий таймаут
+    if (emailTimeoutRef.current) {
+      clearTimeout(emailTimeoutRef.current)
     }
+
+    // Устанавливаем задержку для валидации
+    emailTimeoutRef.current = setTimeout(() => {
+      if (newEmail.trim()) {
+        // Сначала проверяем формат локально
+        validateEmailFormat(newEmail)
+
+        // Если формат правильный, проверяем через API
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (emailRegex.test(newEmail.trim())) {
+          checkEmailExists(newEmail)
+        } else {
+          // Формат неправильный - очищаем состояния API проверки
+          setEmailExists(null)
+          setCheckingEmail(false)
+        }
+      } else {
+        setEmailMessage("")
+        setEmailMessageType("")
+        setEmailExists(null)
+        setCheckingEmail(false)
+      }
+    }, 1500)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

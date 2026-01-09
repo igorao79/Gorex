@@ -3,6 +3,73 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Не авторизован" },
+        { status: 401 }
+      )
+    }
+
+    const { projectId } = await params
+    const body = await request.json()
+    const { name, description } = body
+
+    // Проверяем, что пользователь является создателем проекта или админом
+    const membership = await prisma.projectMember.findFirst({
+      where: {
+        projectId: projectId,
+        userId: session.user.id,
+        role: "admin"
+      }
+    })
+
+    if (!membership) {
+      return NextResponse.json(
+        { error: "У вас нет прав для редактирования этого проекта" },
+        { status: 403 }
+      )
+    }
+
+    if (!name || name.trim().length === 0) {
+      return NextResponse.json(
+        { error: "Название проекта не может быть пустым" },
+        { status: 400 }
+      )
+    }
+
+    // Обновляем проект
+    const updatedProject = await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        name: name.trim(),
+        description: description?.trim() || null,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        status: true,
+        updatedAt: true
+      }
+    })
+
+    return NextResponse.json(updatedProject)
+  } catch (error) {
+    console.error("Error updating project:", error)
+    return NextResponse.json(
+      { error: "Внутренняя ошибка сервера" },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }

@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, Mail, Crown, User, Settings, X } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Users, Mail, Crown, User, Settings, X, Edit, Check, X as XIcon } from "lucide-react"
 
 interface Project {
   id: string
@@ -61,6 +62,10 @@ export function ProjectDetailsModal({
   const [isInviting, setIsInviting] = useState(false)
   const [inviteError, setInviteError] = useState("")
   const [isLoadingMembers, setIsLoadingMembers] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState(project.name)
+  const [editDescription, setEditDescription] = useState(project.description || "")
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -79,9 +84,11 @@ export function ProjectDetailsModal({
   useEffect(() => {
     if (isOpen) {
       setProjectStatus(project.status)
+      setEditName(project.name)
+      setEditDescription(project.description || "")
       fetchMembers()
     }
-  }, [isOpen, project.id, project.status, fetchMembers])
+  }, [isOpen, project.id, project.name, project.description, project.status, fetchMembers])
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -154,6 +161,40 @@ export function ProjectDetailsModal({
     }
   }
 
+  const handleEditProject = async () => {
+    setIsUpdating(true)
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: editName.trim(),
+          description: editDescription.trim() || null,
+        }),
+      })
+
+      if (response.ok) {
+        setIsEditing(false)
+        onUpdate() // Refresh projects list
+      } else {
+        const error = await response.json()
+        console.error("Error updating project:", error)
+      }
+    } catch (error) {
+      console.error("Error updating project:", error)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditName(project.name)
+    setEditDescription(project.description || "")
+    setIsEditing(false)
+  }
+
   const isAdmin = members.some(member =>
     member.user.id === userId && member.role === "admin"
   )
@@ -162,10 +203,68 @@ export function ProjectDetailsModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-w-[600px] max-h-[85vh] overflow-y-auto sm:w-full">
         <DialogHeader>
-          <DialogTitle>{project.name}</DialogTitle>
-          <DialogDescription>
-            {project.description || "Описание проекта отсутствует"}
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              {isEditing ? (
+                <div className="space-y-2">
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Название проекта"
+                    className="text-lg font-semibold"
+                  />
+                  <Textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Описание проекта"
+                    rows={2}
+                    className="text-sm text-muted-foreground resize-none"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <DialogTitle className="flex items-center gap-2">
+                    {project.name}
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                        className="h-6 w-6 p-0 hover:bg-muted"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {project.description || "Описание проекта отсутствует"}
+                  </DialogDescription>
+                </div>
+              )}
+            </div>
+            {isEditing && (
+              <div className="flex items-center gap-1 ml-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleEditProject}
+                  disabled={isUpdating || !editName.trim()}
+                  className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  disabled={isUpdating}
+                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <XIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">

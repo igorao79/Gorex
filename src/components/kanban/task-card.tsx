@@ -83,6 +83,19 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
 
   const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== "DONE"
 
+  // Проверяем, является ли дедлайн завтрашним днем
+  const isTomorrow = task.deadline && (() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Сбрасываем время до начала дня
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1) // Добавляем один день
+
+    const deadlineDate = new Date(task.deadline)
+    deadlineDate.setHours(0, 0, 0, 0) // Сбрасываем время дедлайна
+
+    return deadlineDate.getTime() === tomorrow.getTime() && task.status !== "DONE"
+  })()
+
   return (
     <Card
       ref={setNodeRef}
@@ -165,7 +178,7 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
           </div>
 
           {task.deadline && (
-            <div className={`flex items-center gap-1 text-xs ${isOverdue ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
+            <div className={`flex items-center gap-1 text-xs ${isOverdue || isTomorrow ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
               <Calendar className="w-3 h-3" />
               {format(new Date(task.deadline), "dd.MM", { locale: ru })}
             </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,14 @@ interface TrialSuccessModalProps {
 }
 
 export function TrialSuccessModal({ isOpen, onClose, plan, onTarifUpdated }: TrialSuccessModalProps) {
+
+  // Автоматически выдаем привилегию при открытии модалки
+  React.useEffect(() => {
+    if (isOpen && onTarifUpdated) {
+      onTarifUpdated(plan)
+    }
+  }, [isOpen, plan, onTarifUpdated])
+
   const getPlanDetails = (plan: string) => {
     switch (plan) {
       case 'prof':
@@ -68,7 +77,7 @@ export function TrialSuccessModal({ isOpen, onClose, plan, onTarifUpdated }: Tri
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto overflow-x-hidden sm:max-h-none sm:overflow-y-visible">
         <DialogHeader>
           <VisuallyHidden>
             <DialogTitle>Поздравляем с началом пробного периода</DialogTitle>
@@ -110,12 +119,12 @@ export function TrialSuccessModal({ isOpen, onClose, plan, onTarifUpdated }: Tri
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              Вы начали 14-дневный пробный период
+              Ваш 14-дневный пробный период активирован!
             </motion.p>
 
             {/* Plan Details */}
             <motion.div
-              className="bg-muted/30 rounded-lg p-6 mb-6 text-left"
+              className="bg-muted/30 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 text-left mx-2 sm:mx-0"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
@@ -157,15 +166,10 @@ export function TrialSuccessModal({ isOpen, onClose, plan, onTarifUpdated }: Tri
               transition={{ delay: 1.2 }}
             >
               <Button
-                onClick={() => {
-                  if (onTarifUpdated) {
-                    onTarifUpdated(plan)
-                  }
-                  onClose()
-                }}
+                onClick={onClose}
                 className="px-8"
               >
-                Начать работу
+                Продолжить
               </Button>
             </motion.div>
           </motion.div>

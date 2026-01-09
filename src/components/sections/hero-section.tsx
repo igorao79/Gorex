@@ -57,7 +57,7 @@ export function HeroSection() {
   const { data: session } = useSession()
   return (
     <motion.section
-      className="py-20 px-4"
+      className="py-15 px-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}

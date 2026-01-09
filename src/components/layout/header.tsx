@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Link } from "next-view-transitions"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -22,11 +22,29 @@ import { SignInModal } from "@/components/auth/signin-modal"
 import { SignUpModal } from "@/components/auth/signup-modal"
 
 export function Header() {
-  const { data: session, status, update } = useSession()
+  const { data: session, status } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showSignIn, setShowSignIn] = useState(false)
   const [showSignUp, setShowSignUp] = useState(false)
   const [showContact, setShowContact] = useState(false)
+  const [currentTarif, setCurrentTarif] = useState<string | null>(null)
+  const prevUserIdRef = useRef<string | null>(null)
+
+  // Управление скроллом body при открытии/закрытии мобильного меню
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      // Блокируем скролл при открытии меню
+      document.body.style.overflow = 'hidden'
+    } else {
+      // Восстанавливаем скролл при закрытии меню
+      document.body.style.overflow = 'unset'
+    }
+
+    // Очистка при размонтировании компонента
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [mobileMenuOpen])
 
 
 
@@ -34,6 +52,26 @@ export function Header() {
     await signOut({ redirect: false })
     // Сессия обновится автоматически через SessionProvider
   }
+
+  // Получение текущего тарифа пользователя
+  const fetchCurrentTarif = useCallback(async () => {
+    if (!session?.user) return
+
+    try {
+      const response = await fetch('/api/user/tarif')
+      if (response.ok) {
+        const data = await response.json()
+        setCurrentTarif(data.tarif)
+      }
+    } catch (error) {
+      console.error('Error fetching user tarif:', error)
+    }
+  }, [session?.user])
+
+  // Обновление тарифа без полного обновления сессии
+  const handleTarifUpdate = useCallback(() => {
+    fetchCurrentTarif()
+  }, [fetchCurrentTarif])
 
   // Handle modal events and session updates
   useEffect(() => {
@@ -53,23 +91,34 @@ export function Header() {
       setShowSignUp(true)
     }
 
-    const handleSessionUpdate = async () => {
-      // Обновляем сессию для получения актуального тарифа
-      await update()
-    }
-
     window.addEventListener('open-contact-modal', handleOpenContact)
     window.addEventListener('open-signin-modal', handleOpenSignIn)
     window.addEventListener('open-signup-modal', handleOpenSignUp)
-    window.addEventListener('session-update', handleSessionUpdate)
+    window.addEventListener('session-update', handleTarifUpdate)
 
     return () => {
       window.removeEventListener('open-contact-modal', handleOpenContact)
       window.removeEventListener('open-signin-modal', handleOpenSignIn)
       window.removeEventListener('open-signup-modal', handleOpenSignUp)
-      window.removeEventListener('session-update', handleSessionUpdate)
+      window.removeEventListener('session-update', handleTarifUpdate)
     }
-  }, [session?.user, update])
+  }, [session?.user, handleTarifUpdate])
+
+  // Загружаем тариф при изменении сессии
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const currentUserId = session?.user?.id || null
+
+    if (currentUserId !== prevUserIdRef.current) {
+      prevUserIdRef.current = currentUserId
+
+      if (currentUserId) {
+        fetchCurrentTarif()
+      } else {
+        setCurrentTarif(null)
+      }
+    }
+  }, [session?.user?.id, fetchCurrentTarif])
 
   const switchToSignUp = () => {
     setShowSignIn(false)
@@ -80,6 +129,7 @@ export function Header() {
     setShowSignUp(false)
     setShowSignIn(true)
   }
+
 
   return (
     <>
@@ -224,9 +274,9 @@ export function Header() {
                       <div className="flex flex-col space-y-1 leading-none">
                         <div className="flex items-center gap-2">
                           {session.user.name && <p className="font-medium">{session.user.name}</p>}
-                          {session.user.tarif && (
+                          {currentTarif && (
                             <span className="text-xs bg-muted px-2 py-0.5 rounded font-medium">
-                              {session.user.tarif === 'prof' ? 'Pro' : session.user.tarif === 'corp' ? 'Team' : 'Free'}
+                              {currentTarif === 'prof' ? 'Pro' : currentTarif === 'corp' ? 'Team' : 'Free'}
                             </span>
                           )}
                         </div>
