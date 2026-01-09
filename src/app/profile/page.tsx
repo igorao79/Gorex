@@ -109,10 +109,6 @@ export default function ProfilePage() {
     if (!formData.name.trim()) {
       newErrors.name = "Имя обязательно"
     }
-    // Проверяем отличие имени только если пользователь пытается его изменить
-    else if (formData.name.trim() !== (profile?.name || "")) {
-      newErrors.name = "Новое имя должно отличаться от текущего"
-    }
 
     if (formData.newPassword) {
       if (!formData.currentPassword) {

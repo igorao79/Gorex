@@ -44,6 +44,26 @@ export async function PUT(
       )
     }
 
+    // Проверяем, что название отличается от текущего
+    const currentProject = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { name: true }
+    })
+
+    if (!currentProject) {
+      return NextResponse.json(
+        { error: "Проект не найден" },
+        { status: 404 }
+      )
+    }
+
+    if (name.trim() === currentProject.name) {
+      return NextResponse.json(
+        { error: "Новое название должно отличаться от текущего" },
+        { status: 400 }
+      )
+    }
+
     // Обновляем проект
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
