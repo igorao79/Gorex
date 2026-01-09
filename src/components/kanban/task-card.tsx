@@ -41,6 +41,8 @@ interface Task {
 
 interface TaskCardProps {
   task: Task
+  userRole: string
+  userId: string
   onEdit?: (task: Task) => void
   onDelete?: (taskId: string) => void
 }
@@ -70,9 +72,19 @@ const getPriorityIcon = (priority: string) => {
   }
 }
 
-export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ task, userRole, userId, onEdit, onDelete }: TaskCardProps) {
+  // Проверяем, может ли пользователь таскать эту задачу
+  const canDrag = userRole === "admin" || task.assigneeId === userId
+
+  // Проверяем, может ли пользователь редактировать задачу
+  const canEdit = userRole === "admin" || task.assigneeId === userId
+
+  // Проверяем, может ли пользователь удалять задачу
+  const canDelete = userRole === "admin"
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
+    disabled: !canDrag,
   })
 
   const style = transform
@@ -125,26 +137,32 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
                  task.priority === "MEDIUM" ? "Средний" : "Низкий"}
               </div>
             </Badge>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <MoreVertical className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit?.(task)}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Редактировать
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onDelete?.(task.id)}
-                  className="text-red-600 focus:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Удалить
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {(canEdit || canDelete) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <MoreVertical className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {canEdit && (
+                    <DropdownMenuItem onClick={() => onEdit?.(task)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Редактировать
+                    </DropdownMenuItem>
+                  )}
+                  {canDelete && (
+                    <DropdownMenuItem
+                      onClick={() => onDelete?.(task.id)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Удалить
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </CardHeader>

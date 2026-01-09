@@ -32,6 +32,8 @@ interface KanbanColumnProps {
   title: string
   tasks: Task[]
   count: number
+  userRole: string
+  userId: string
   onEditTask?: (task: Task) => void
   onDeleteTask?: (taskId: string) => void
 }
@@ -66,7 +68,7 @@ const getHeaderColor = (status: string) => {
   }
 }
 
-export function KanbanColumn({ id, title, tasks, count, onEditTask, onDeleteTask }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, tasks, count, userRole, userId, onEditTask, onDeleteTask }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
   })
@@ -99,6 +101,8 @@ export function KanbanColumn({ id, title, tasks, count, onEditTask, onDeleteTask
             <div className="transition-all duration-200 hover:scale-[1.02]">
               <TaskCard
                 task={task}
+                userRole={userRole}
+                userId={userId}
                 onEdit={onEditTask}
                 onDelete={onDeleteTask}
               />

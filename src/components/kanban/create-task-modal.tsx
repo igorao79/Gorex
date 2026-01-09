@@ -90,10 +90,10 @@ export function CreateTaskModal({
         },
         body: JSON.stringify({
           title: title.trim(),
-          description: description.trim() || undefined,
+          description: description.trim() || null,
           priority,
-          assigneeId: assigneeId || undefined,
-          deadline: deadline?.toISOString(),
+          assigneeId: assigneeId || null,
+          deadline: deadline?.toISOString() || null,
         }),
       })
 

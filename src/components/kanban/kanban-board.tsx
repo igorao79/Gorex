@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
   DndContext,
   DragEndEvent,
@@ -71,9 +71,41 @@ const dropAnimation = defaultDropAnimation
 export function KanbanBoard({
   projectId,
   tasks: initialTasks,
-  members
+  members,
+  userRole,
+  userId
 }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
+
+  // Real-time обновление задач
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/tasks`)
+        if (response.ok) {
+          const updatedTasks = await response.json()
+          setTasks(updatedTasks)
+        }
+      } catch (error) {
+        console.error('Failed to fetch tasks:', error)
+      }
+    }
+
+    // Обновляем каждые 30 секунд
+    const interval = setInterval(fetchTasks, 30000)
+
+    // Слушаем изменения в задачах
+    const handleTaskUpdate = () => {
+      fetchTasks()
+    }
+
+    window.addEventListener('task-updated', handleTaskUpdate)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('task-updated', handleTaskUpdate)
+    }
+  }, [projectId])
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -153,8 +185,9 @@ export function KanbanBoard({
         throw new Error("Failed to update task status")
       }
 
-      // Отправляем событие обновления проектов
-      console.log('Sending project-updated event after drag')
+      // Отправляем событие обновления задач и проектов
+      console.log('Sending task-updated and project-updated events after drag')
+      window.dispatchEvent(new CustomEvent('task-updated'))
       window.dispatchEvent(new CustomEvent('project-updated'))
     } catch (error) {
       console.error("Error updating task status:", error)
@@ -206,6 +239,8 @@ export function KanbanBoard({
         setTasks(updatedTasks)
         setShowEditModal(false)
         setEditingTask(null)
+        // Отправляем событие обновления задач
+        window.dispatchEvent(new CustomEvent('task-updated'))
         // Отправляем событие обновления проектов
         window.dispatchEvent(new CustomEvent('project-updated'))
       }
@@ -233,10 +268,12 @@ export function KanbanBoard({
     <>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-heading text-foreground">Kanban доска</h2>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Создать задачу
-        </Button>
+        {userRole === "admin" && (
+          <Button onClick={() => setShowCreateModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Создать задачу
+          </Button>
+        )}
       </div>
 
       <div className="relative dnd-context h-full overflow-hidden overscroll-contain">
@@ -254,6 +291,8 @@ export function KanbanBoard({
             title="К выполнению"
             tasks={columns.TODO}
             count={columns.TODO.length}
+            userRole={userRole}
+            userId={userId}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -262,6 +301,8 @@ export function KanbanBoard({
             title="В работе"
             tasks={columns.IN_PROGRESS}
             count={columns.IN_PROGRESS.length}
+            userRole={userRole}
+            userId={userId}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -270,6 +311,8 @@ export function KanbanBoard({
             title="Проверка"
             tasks={columns.REVIEW}
             count={columns.REVIEW.length}
+            userRole={userRole}
+            userId={userId}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -278,6 +321,8 @@ export function KanbanBoard({
             title="Готово"
             tasks={columns.DONE}
             count={columns.DONE.length}
+            userRole={userRole}
+            userId={userId}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -295,6 +340,8 @@ export function KanbanBoard({
           {activeTask ? (
             <TaskCard
               task={activeTask}
+              userRole={userRole}
+              userId={userId}
             />
           ) : null}
         </DragOverlay>

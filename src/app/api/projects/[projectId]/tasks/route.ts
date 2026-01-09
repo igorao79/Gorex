@@ -85,7 +85,10 @@ export async function POST(
     }
 
     const { projectId } = await params
-    const { title, description, assigneeId, deadline, priority } = await request.json()
+    const body = await request.json()
+    const { title, description, assigneeId, deadline, priority } = body
+
+    console.log('Create task request:', { title, description, assigneeId, deadline, priority })
 
     if (!title || typeof title !== "string" || title.trim().length === 0) {
       return NextResponse.json(
@@ -100,6 +103,13 @@ export async function POST(
       const today = new Date()
       today.setHours(0, 0, 0, 0) // Устанавливаем начало дня
 
+      console.log('Deadline validation:', {
+        deadline,
+        deadlineDate,
+        today,
+        isPast: deadlineDate < today
+      })
+
       if (deadlineDate < today) {
         return NextResponse.json(
           { error: "Дедлайн не может быть в прошлом" },
@@ -108,23 +118,25 @@ export async function POST(
       }
     }
 
-    // Проверяем, что пользователь является участником проекта
+    // Проверяем, что пользователь является админом проекта
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId,
         userId: session.user.id,
+        role: "admin",
       },
     })
 
     if (!membership) {
       return NextResponse.json(
-        { error: "Доступ запрещен" },
+        { error: "Только администратор проекта может создавать задачи" },
         { status: 403 }
       )
     }
 
     // Если указан assigneeId, проверяем что он тоже участник проекта
-    if (assigneeId) {
+    if (assigneeId && assigneeId !== null && assigneeId !== '') {
+      console.log('Validating assignee:', assigneeId)
       const assigneeMembership = await prisma.projectMember.findFirst({
         where: {
           projectId,
