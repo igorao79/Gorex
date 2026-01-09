@@ -590,13 +590,13 @@ export function ProjectDetailsModal({
                           )}
                         </div>
                         {/* Фиксированная высота для сообщений валидации */}
-                        <div className="h-5 mt-1 overflow-hidden">
+                        <div className="min-h-[1.25rem] mt-1">
                           {emailValid === false && (
                             <p className="text-sm text-red-600 leading-tight">
                               {(() => {
                                 const isAlreadyMember = members.some(member => member.user.email.toLowerCase() === inviteEmail.toLowerCase())
                                 return isAlreadyMember
-                                  ? "Этот пользователь уже является участником проекта"
+                                  ? "Уже является участником проекта."
                                   : "Пользователь с таким email не найден"
                               })()}
                             </p>

@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Filter } from "lucide-react"
+import { Plus, Filter, Search } from "lucide-react"
 import { ProjectCard } from "./project-card"
 import { CreateProjectModal } from "./create-project-modal"
 
@@ -37,13 +38,28 @@ export function ProjectGrid({ userId, refreshTrigger }: ProjectGridProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>("ALL")
+  const [searchQuery, setSearchQuery] = useState("")
   const [refreshCounter, setRefreshCounter] = useState(0)
 
-  // Фильтруем проекты по статусу
+  // Фильтруем проекты по статусу и поиску
   const filteredProjects = useMemo(() => {
-    if (statusFilter === "ALL") return projects
-    return projects.filter(project => project.status === statusFilter)
-  }, [projects, statusFilter])
+    let filtered = projects
+
+    // Фильтр по статусу
+    if (statusFilter !== "ALL") {
+      filtered = filtered.filter(project => project.status === statusFilter)
+    }
+
+    // Фильтр по поиску
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      filtered = filtered.filter(project =>
+        project.name.toLowerCase().includes(query)
+      )
+    }
+
+    return filtered
+  }, [projects, statusFilter, searchQuery])
 
   useEffect(() => {
     fetchProjects()
@@ -206,6 +222,15 @@ export function ProjectGrid({ userId, refreshTrigger }: ProjectGridProps) {
                 <SelectItem value="ARCHIVED">Архивированные</SelectItem>
               </SelectContent>
             </Select>
+            <div className="relative flex-1 sm:flex-none sm:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Поиск проектов..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             {isRefreshing && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <div className="w-3 h-3 border border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin"></div>
@@ -220,15 +245,20 @@ export function ProjectGrid({ userId, refreshTrigger }: ProjectGridProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[600px] transition-all duration-300 ease-in-out">
         {filteredProjects.map((project) => (
-          <ProjectCard
+          <div
             key={project.id}
-            project={project}
-            userId={userId}
-            onUpdate={handleProjectUpdate}
-            onMemberCountChange={handleMemberCountChange}
-          />
+            className="animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out will-change-transform"
+            style={{ animationFillMode: 'forwards' }}
+          >
+            <ProjectCard
+              project={project}
+              userId={userId}
+              onUpdate={handleProjectUpdate}
+              onMemberCountChange={handleMemberCountChange}
+            />
+          </div>
         ))}
       </div>
       <CreateProjectModal
