@@ -77,7 +77,7 @@ export function TrialSuccessModal({ isOpen, onClose, plan, onTarifUpdated }: Tri
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto overflow-x-hidden sm:max-h-none sm:overflow-y-visible">
+      <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto overflow-x-hidden sm:max-h-[85vh] sm:overflow-y-visible md:max-h-[80vh]">
         <DialogHeader>
           <VisuallyHidden>
             <DialogTitle>Поздравляем с началом пробного периода</DialogTitle>
