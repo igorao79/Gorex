@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ProjectGrid } from "@/components/dashboard/project-grid"
 import { AnalyticsCards } from "@/components/dashboard/analytics-cards"
@@ -11,6 +12,7 @@ export default function Dashboard() {
   const { data: session, status } = useSession()
   const [projectsWithTasks, setProjectsWithTasks] = useState([])
   const [projectsUpdated, setProjectsUpdated] = useState(0) // Trigger for re-fetching
+  const [currentTarif, setCurrentTarif] = useState<string | null>(null)
 
   const fetchProjects = useCallback(async () => {
     if (!session?.user?.id) return
@@ -31,6 +33,56 @@ export default function Dashboard() {
     setProjectsUpdated(prev => prev + 1) // Trigger ProjectGrid to refresh
   }, [fetchProjects])
 
+  // Автоматическое обновление данных каждые 30 секунд
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!document.hidden) { // Только если вкладка активна
+        console.log('Auto-refreshing dashboard data...')
+        fetchProjects()
+      }
+    }, 30000) // 30 секунд
+
+    return () => clearInterval(interval)
+  }, [fetchProjects])
+
+  // Обновление при возвращении на вкладку
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Tab focused, refreshing dashboard data...')
+        fetchProjects()
+      }
+    }
+
+    const handleFocus = () => {
+      console.log('Window focused, refreshing dashboard data...')
+      fetchProjects()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchProjects])
+
+  // Получение текущего тарифа пользователя
+  const fetchCurrentTarif = useCallback(async () => {
+    if (!session?.user) return
+
+    try {
+      const response = await fetch('/api/user/tarif')
+      if (response.ok) {
+        const data = await response.json()
+        setCurrentTarif(data.tarif)
+      }
+    } catch (error) {
+      console.error('Error fetching user tarif:', error)
+    }
+  }, [session?.user])
+
   useEffect(() => {
     if (status === "loading") return
     if (!session?.user) {
@@ -40,7 +92,8 @@ export default function Dashboard() {
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProjects()
-  }, [session, status, fetchProjects])
+    fetchCurrentTarif()
+  }, [session, status, fetchProjects, fetchCurrentTarif])
 
   // Автоматическое обновление для приглашенных пользователей
   useEffect(() => {
@@ -115,9 +168,26 @@ export default function Dashboard() {
           <h1 className="text-3xl font-heading text-foreground mb-2">
             Добро пожаловать, {session.user.name}!
           </h1>
-          <p className="text-muted-foreground font-sans">
+          <p className="text-muted-foreground font-sans mb-2">
             Управляйте своими проектами и задачами
           </p>
+          {currentTarif && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-sm text-muted-foreground">Ваш тариф:</span>
+              <Link
+                href="/pricing"
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                  currentTarif === 'free'
+                    ? 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-50'
+                    : currentTarif === 'prof'
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                }`}
+              >
+                {currentTarif === 'free' ? 'Free' : currentTarif === 'prof' ? 'Pro' : 'Team'}
+              </Link>
+            </div>
+          )}
         </div>
 
         <AnalyticsCards projects={projectsWithTasks} onTasksUpdate={refreshAllData} />

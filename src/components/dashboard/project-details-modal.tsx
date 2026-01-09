@@ -25,6 +25,18 @@ interface Project {
   _count: {
     members: number
     tasks: number
+    overdueTasks: number
+  }
+}
+
+// Функция для правильного склонения слова "задача"
+function getTasksText(count: number): string {
+  if (count % 10 === 1 && count % 100 !== 11) {
+    return `${count} задача`
+  } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+    return `${count} задачи`
+  } else {
+    return `${count} задач`
   }
 }
 
@@ -66,6 +78,7 @@ export function ProjectDetailsModal({
   const [editName, setEditName] = useState(project.name)
   const [editDescription, setEditDescription] = useState(project.description || "")
   const [isUpdating, setIsUpdating] = useState(false)
+  const [userTarif, setUserTarif] = useState<string | null>(null)
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -81,14 +94,27 @@ export function ProjectDetailsModal({
     }
   }, [project.id])
 
+  const fetchUserTarif = useCallback(async () => {
+    try {
+      const response = await fetch('/api/user/tarif')
+      if (response.ok) {
+        const data = await response.json()
+        setUserTarif(data.tarif)
+      }
+    } catch (error) {
+      console.error('Error fetching user tarif:', error)
+    }
+  }, [])
+
   useEffect(() => {
     if (isOpen) {
       setProjectStatus(project.status)
       setEditName(project.name)
       setEditDescription(project.description || "")
       fetchMembers()
+      fetchUserTarif()
     }
-  }, [isOpen, project.id, project.name, project.description, project.status, fetchMembers])
+  }, [isOpen, project.id, project.name, project.description, project.status, fetchMembers, fetchUserTarif])
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -199,9 +225,23 @@ export function ProjectDetailsModal({
     member.user.id === userId && member.role === "admin"
   )
 
+  // Проверяем лимит участников
+  const getMemberLimit = () => {
+    if (!userTarif) return 5
+    const limits = {
+      free: 5,
+      prof: 25,
+      corp: Infinity
+    }
+    return limits[userTarif as keyof typeof limits] || 5
+  }
+
+  const memberLimit = getMemberLimit()
+  const isAtLimit = project._count.members >= memberLimit
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[600px] max-h-[85vh] overflow-y-auto sm:w-full">
+      <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
@@ -276,6 +316,27 @@ export function ProjectDetailsModal({
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{project._count.members}</div>
+                {userTarif && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {(() => {
+                      const limits = {
+                        free: 5,
+                        prof: 25,
+                        corp: '∞'
+                      }
+                      const limit = limits[userTarif as keyof typeof limits] || 5
+                      const current = project._count.members
+                      const isNearLimit = typeof limit === 'number' && current >= limit * 0.8
+
+                      return (
+                        <span className={isNearLimit ? 'text-yellow-600' : ''}>
+                          Лимит: {current}/{limit}
+                          {isNearLimit && ' (почти достигнут)'}
+                        </span>
+                      )
+                    })()}
+                  </div>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -283,7 +344,13 @@ export function ProjectDetailsModal({
                 <CardTitle className="text-sm font-medium">Задачи</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{project._count.tasks}</div>
+                <div className="text-2xl font-bold">{getTasksText(project._count.tasks)}</div>
+                {project._count.overdueTasks > 0 && (
+                  <div className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    {project._count.overdueTasks} просрочено
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -392,30 +459,54 @@ export function ProjectDetailsModal({
                 <span className="truncate">Пригласить участника</span>
               </h3>
 
-              <form onSubmit={handleInvite} className="space-y-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
-                  <div className="flex-1">
-                    <Label htmlFor="invite-email" className="mb-2 block">Email пользователя</Label>
-                    <Input
-                      id="invite-email"
-                      type="email"
-                      placeholder="user@example.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      required
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button type="submit" disabled={isInviting} className="w-full sm:w-auto">
-                      {isInviting ? "Приглашение..." : "Пригласить"}
-                    </Button>
-                  </div>
+              {isAtLimit ? (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    Достигнут лимит участников ({project._count.members}/{memberLimit}).
+                    {userTarif === 'free' && (
+                      <>
+                        {' '}
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto text-yellow-800 underline"
+                          onClick={() => window.location.href = '/pricing'}
+                        >
+                          Обновитесь до Pro
+                        </Button>
+                        {' '}для большего количества участников.
+                      </>
+                    )}
+                    {userTarif === 'prof' && (
+                      <> Свяжитесь с поддержкой для увеличения лимита.</>
+                    )}
+                  </p>
                 </div>
-                {inviteError && (
-                  <p className="text-sm text-red-600">{inviteError}</p>
-                )}
-              </form>
+              ) : (
+                <form onSubmit={handleInvite} className="space-y-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="invite-email" className="mb-2 block">Email пользователя</Label>
+                      <Input
+                        id="invite-email"
+                        type="email"
+                        placeholder="user@example.com"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        required
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button type="submit" disabled={isInviting} className="w-full sm:w-auto">
+                        {isInviting ? "Приглашение..." : "Пригласить"}
+                      </Button>
+                    </div>
+                  </div>
+                  {inviteError && (
+                    <p className="text-sm text-red-600">{inviteError}</p>
+                  )}
+                </form>
+              )}
             </div>
           )}
         </div>

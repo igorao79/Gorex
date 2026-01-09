@@ -85,7 +85,7 @@ export function PricingSection() {
           <h2 className="text-4xl font-heading text-foreground mb-4">
             Тарифы
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             Выберите подходящий тариф для вашей команды
           </p>
         </div>
@@ -93,7 +93,7 @@ export function PricingSection() {
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           <Card className="border-2">
             <CardHeader className="text-center pb-8">
-              <CardTitle className="text-3xl">Free</CardTitle>
+              <CardTitle className="text-3xl text-white">Free</CardTitle>
               <div className="mt-4">
                 <span className="text-4xl font-bold">$0</span>
                 <span className="text-muted-foreground/70 ml-1">/ месяц</span>
@@ -132,7 +132,7 @@ export function PricingSection() {
               Популярный
             </Badge>
             <CardHeader className="text-center pb-8">
-              <CardTitle className="text-3xl">Pro</CardTitle>
+              <CardTitle className="text-3xl text-blue-500">Pro</CardTitle>
               <div className="mt-4">
                 <span className="text-4xl font-bold">$9</span>
                 <span className="text-muted-foreground/70 ml-1">/ месяц</span>
@@ -188,7 +188,7 @@ export function PricingSection() {
 
           <Card className="border-2">
             <CardHeader className="text-center pb-8">
-              <CardTitle className="text-3xl">Team</CardTitle>
+              <CardTitle className="text-3xl text-yellow-500">Team</CardTitle>
               <div className="mt-4">
                 <span className="text-4xl font-bold">$29</span>
                 <span className="text-muted-foreground/70 ml-1">/ месяц</span>

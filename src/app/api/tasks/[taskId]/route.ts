@@ -111,8 +111,26 @@ export async function PUT(
             email: true,
           },
         },
+        project: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     })
+
+    // Создаем уведомление, если исполнитель изменился
+    if (assigneeId !== undefined && assigneeId !== task.assigneeId && assigneeId && assigneeId !== session.user.id) {
+      await prisma.notification.create({
+        data: {
+          message: `Вас назначили на задачу "${updatedTask.title}" в проекте "${updatedTask.project.name}"`,
+          type: 'task_assigned',
+          userId: assigneeId,
+          taskId: updatedTask.id,
+        },
+      })
+    }
 
     return NextResponse.json(updatedTask)
   } catch (error) {

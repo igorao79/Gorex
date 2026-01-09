@@ -83,7 +83,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-hidden">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">

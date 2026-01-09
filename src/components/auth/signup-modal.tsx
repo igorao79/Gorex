@@ -196,7 +196,8 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
         setEmailMessage("")
         setEmailMessageType("")
         onClose()
-        onSwitchToSignIn()
+        // Перенаправляем на dashboard после успешной регистрации
+        window.location.href = "/dashboard"
       } else {
         setError(data.error || "Ошибка регистрации")
       }

@@ -23,6 +23,13 @@ export async function GET() {
         }
       },
       include: {
+        creator: {
+          select: {
+            name: true,
+            email: true
+          }
+        },
+        members: true,
         tasks: {
           select: {
             id: true,
@@ -33,8 +40,34 @@ export async function GET() {
       }
     })
 
+    // Добавляем расчет просроченных задач
+    const projectsWithOverdue = projects.map(project => {
+      const overdueTasks = project.tasks.filter(task => {
+        const hasDeadline = !!task.deadline
+        const isOverdue = task.deadline ? new Date(task.deadline) < new Date() : false
+        const isNotDone = task.status !== 'DONE'
+        const result = hasDeadline && isOverdue && isNotDone
 
-    return NextResponse.json(projects)
+        if (task.deadline) {
+          console.log(`Task ${task.id}: deadline=${task.deadline}, status=${task.status}, hasDeadline=${hasDeadline}, isOverdue=${isOverdue}, isNotDone=${isNotDone}, result=${result}`)
+        }
+
+        return result
+      }).length
+
+
+      return {
+        ...project,
+        _count: {
+          ...project._count,
+          members: project.members.length,
+          tasks: project.tasks.length,
+          overdueTasks
+        }
+      }
+    })
+
+    return NextResponse.json(projectsWithOverdue)
   } catch (error) {
     console.error("Error fetching dashboard projects:", error)
     return NextResponse.json(

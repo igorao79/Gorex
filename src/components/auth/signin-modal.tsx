@@ -110,7 +110,8 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
         setError("Неверный email или пароль")
       } else {
         onClose()
-        // Сессия обновится автоматически через SessionProvider
+        // Перенаправляем на dashboard после успешного входа
+        window.location.href = "/dashboard"
       }
     } catch {
       setError("Произошла ошибка при входе")

@@ -149,7 +149,7 @@ export function CreateTaskModal({
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label>Приоритет</Label>
               <Select value={priority} onValueChange={(value: "LOW" | "MEDIUM" | "HIGH" | "URGENT") => setPriority(value)}>
@@ -213,12 +213,12 @@ export function CreateTaskModal({
             </Popover>
           </div>
 
-          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
-              Отмена
-            </Button>
-            <Button type="submit" disabled={isSubmitting || !title.trim()} className="w-full sm:w-auto">
+          <div className="flex flex-col gap-3 pt-4">
+            <Button type="submit" disabled={isSubmitting || !title.trim()} className="w-full">
               {isSubmitting ? "Создание..." : "Создать задачу"}
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose} className="w-full">
+              Отмена
             </Button>
           </div>
         </form>

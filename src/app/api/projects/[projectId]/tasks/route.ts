@@ -160,8 +160,26 @@ export async function POST(
             email: true,
           },
         },
+        project: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     })
+
+    // Создаем уведомление, если задача назначена на пользователя
+    if (assigneeId && assigneeId !== session.user.id) {
+      await prisma.notification.create({
+        data: {
+          message: `Вас назначили на задачу "${task.title}" в проекте "${task.project.name}"`,
+          type: 'task_assigned',
+          userId: assigneeId,
+          taskId: task.id,
+        },
+      })
+    }
 
     return NextResponse.json(task, { status: 201 })
   } catch (error) {

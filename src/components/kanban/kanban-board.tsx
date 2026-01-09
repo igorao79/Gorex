@@ -10,7 +10,9 @@ import {
   useSensor,
   useSensors,
   defaultDropAnimation,
+  rectIntersection,
 } from "@dnd-kit/core"
+import { restrictToWindowEdges } from "@dnd-kit/modifiers"
 import { KanbanColumn } from "./kanban-column"
 import { TaskCard } from "./task-card"
 import { CreateTaskModal } from "./create-task-modal"
@@ -150,6 +152,10 @@ export function KanbanBoard({
       if (!response.ok) {
         throw new Error("Failed to update task status")
       }
+
+      // Отправляем событие обновления проектов
+      console.log('Sending project-updated event after drag')
+      window.dispatchEvent(new CustomEvent('project-updated'))
     } catch (error) {
       console.error("Error updating task status:", error)
 
@@ -182,6 +188,8 @@ export function KanbanBoard({
       if (response.ok) {
         // Удаляем задачу из локального состояния
         setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId))
+        // Отправляем событие обновления проектов
+        window.dispatchEvent(new CustomEvent('project-updated'))
       } else {
       }
     } catch (error) {
@@ -198,6 +206,8 @@ export function KanbanBoard({
         setTasks(updatedTasks)
         setShowEditModal(false)
         setEditingTask(null)
+        // Отправляем событие обновления проектов
+        window.dispatchEvent(new CustomEvent('project-updated'))
       }
     } catch (error) {
       console.error("Error refreshing tasks:", error)
@@ -209,6 +219,8 @@ export function KanbanBoard({
   const handleTaskCreated = (newTask: Task) => {
     setTasks(prevTasks => [...prevTasks, newTask])
     setShowCreateModal(false)
+    // Отправляем событие обновления проектов
+    window.dispatchEvent(new CustomEvent('project-updated'))
   }
 
   const handleTaskDeleted = (taskId: string) => {
@@ -227,12 +239,16 @@ export function KanbanBoard({
         </Button>
       </div>
 
+      <div className="relative">
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        collisionDetection={rectIntersection}
+        modifiers={[restrictToWindowEdges]}
+        autoScroll={false}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <KanbanColumn
             id="TODO"
             title="К выполнению"
@@ -274,7 +290,8 @@ export function KanbanBoard({
             />
           ) : null}
         </DragOverlay>
-      </DndContext>
+        </DndContext>
+      </div>
 
       <CreateTaskModal
         isOpen={showCreateModal}

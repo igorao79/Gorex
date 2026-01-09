@@ -43,6 +43,47 @@ export async function POST(
       )
     }
 
+    // Получаем текущий тариф пользователя
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { tarif: true }
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Пользователь не найден" },
+        { status: 404 }
+      )
+    }
+
+    // Определяем лимиты участников по тарифам
+    const memberLimits = {
+      free: 5,
+      prof: 25,
+      corp: Infinity // бесконечно для корпоративного тарифа
+    }
+
+    const currentLimit = memberLimits[user.tarif as keyof typeof memberLimits] || 5
+
+    // Считаем текущих участников проекта
+    const currentMemberCount = await prisma.projectMember.count({
+      where: { projectId }
+    })
+
+    // Проверяем лимит
+    if (currentMemberCount >= currentLimit) {
+      return NextResponse.json(
+        {
+          error: `Превышен лимит участников для вашего тарифа. Максимум: ${currentLimit} участников. ${
+            user.tarif === 'free'
+              ? 'Обновитесь до Pro для большего количества участников.'
+              : 'Свяжитесь с поддержкой для увеличения лимита.'
+          }`
+        },
+        { status: 400 }
+      )
+    }
+
     // Находим пользователя по email
     const userToInvite = await prisma.user.findUnique({
       where: { email },

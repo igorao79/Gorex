@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, LogIn } from "lucide-react"
+import { Menu, LogIn, Bell, X } from "lucide-react"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ModeToggle } from "@/components/mode-toggle"
@@ -28,6 +28,7 @@ export function Header() {
   const [showSignUp, setShowSignUp] = useState(false)
   const [showContact, setShowContact] = useState(false)
   const [currentTarif, setCurrentTarif] = useState<string | null>(null)
+  const [notifications, setNotifications] = useState<{id: string, message: string, type: string, createdAt: string}[]>([])
   const prevUserIdRef = useRef<string | null>(null)
 
   // Управление скроллом body при открытии/закрытии мобильного меню
@@ -68,6 +69,7 @@ export function Header() {
     }
   }, [session?.user])
 
+
   // Обновление тарифа без полного обновления сессии
   const handleTarifUpdate = useCallback(() => {
     fetchCurrentTarif()
@@ -105,7 +107,6 @@ export function Header() {
   }, [session?.user, handleTarifUpdate])
 
   // Загружаем тариф при изменении сессии
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const currentUserId = session?.user?.id || null
 
@@ -113,12 +114,28 @@ export function Header() {
       prevUserIdRef.current = currentUserId
 
       if (currentUserId) {
-        fetchCurrentTarif()
+        // Получаем тариф
+        fetch('/api/user/tarif')
+          .then(response => response.ok ? response.json() : null)
+          .then(data => {
+            if (data) setCurrentTarif(data.tarif)
+          })
+          .catch(error => console.error('Error fetching user tarif:', error))
+
+        // Получаем уведомления
+        fetch('/api/user/notifications')
+          .then(response => response.ok ? response.json() : [])
+          .then(data => setNotifications(data))
+          .catch(error => console.error('Error fetching notifications:', error))
       } else {
-        setCurrentTarif(null)
+        // Используем setTimeout для избежания cascading renders
+        setTimeout(() => {
+          setCurrentTarif(null)
+          setNotifications([])
+        }, 0)
       }
     }
-  }, [session?.user?.id, fetchCurrentTarif])
+  }, [session?.user?.id])
 
   const switchToSignUp = () => {
     setShowSignIn(false)
@@ -141,31 +158,28 @@ export function Header() {
             </Link>
 
           <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/"
-              className="text-muted-foreground hover:text-foreground transition-colors font-semibold"
-            >
-              Главная
-            </Link>
-            <Link
-              href="/features"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Возможности
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Тарифы
-            </Link>
-            <Link
-              href="/about"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              О нас
-            </Link>
-            {session?.user && (
+            {!session?.user ? (
+              <>
+                <Link
+                  href="/features"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Возможности
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Тарифы
+                </Link>
+                <Link
+                  href="/about"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  О нас
+                </Link>
+              </>
+            ) : (
               <Link
                 href="/dashboard"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -205,35 +219,31 @@ export function Header() {
                       </Link>
                     </div>
                     <nav className="flex flex-col space-y-4">
-                      <Link
-                        href="/"
-                        className="text-lg font-semibold text-foreground hover:text-foreground/80 transition-colors py-3 px-4 rounded-lg hover:bg-muted"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Главная
-                      </Link>
-                      <Link
-                        href="/features"
-                        className="text-lg text-muted-foreground hover:text-foreground transition-colors py-3 px-4 rounded-lg hover:bg-muted"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Возможности
-                      </Link>
-                      <Link
-                        href="/pricing"
-                        className="text-lg text-muted-foreground hover:text-foreground transition-colors py-3 px-4 rounded-lg hover:bg-muted"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Тарифы
-                      </Link>
-                      <Link
-                        href="/about"
-                        className="text-lg text-muted-foreground hover:text-foreground transition-colors py-3 px-4 rounded-lg hover:bg-muted"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        О нас
-                      </Link>
-                      {session?.user && (
+                      {!session?.user ? (
+                        <>
+                          <Link
+                            href="/features"
+                            className="text-lg text-muted-foreground hover:text-foreground transition-colors py-3 px-4 rounded-lg hover:bg-muted"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            Возможности
+                          </Link>
+                          <Link
+                            href="/pricing"
+                            className="text-lg text-muted-foreground hover:text-foreground transition-colors py-3 px-4 rounded-lg hover:bg-muted"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            Тарифы
+                          </Link>
+                          <Link
+                            href="/about"
+                            className="text-lg text-muted-foreground hover:text-foreground transition-colors py-3 px-4 rounded-lg hover:bg-muted"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            О нас
+                          </Link>
+                        </>
+                      ) : (
                         <Link
                           href="/dashboard"
                           className="text-lg text-muted-foreground hover:text-foreground transition-colors py-3 px-4 rounded-lg hover:bg-muted"
@@ -258,6 +268,69 @@ export function Header() {
               ) : session?.user ? (
                 <div className="flex items-center space-x-2">
                   <ModeToggle />
+
+                  {/* Notifications Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="relative h-8 w-8 rounded-full hover:bg-slate-100"
+                      >
+                        <Bell className="h-4 w-4" />
+                        {notifications.length > 0 && (
+                          <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                            {notifications.length > 9 ? '9+' : notifications.length}
+                          </span>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-80" align="end" forceMount>
+                      <div className="p-4 border-b">
+                        <h3 className="font-semibold">Уведомления</h3>
+                      </div>
+                      <div className="max-h-96 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="p-4 text-center text-muted-foreground">
+                            Нет новых уведомлений
+                          </div>
+                        ) : (
+                          notifications.map((notification) => (
+                            <div key={notification.id} className="p-4 border-b hover:bg-accent">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <p className="text-sm">{notification.message}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {new Date(notification.createdAt).toLocaleString('ru-RU')}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-accent"
+                                  onClick={async () => {
+                                    try {
+                                      const response = await fetch(`/api/user/notifications/${notification.id}`, {
+                                        method: 'DELETE',
+                                      })
+                                      if (response.ok) {
+                                        setNotifications(prev => prev.filter(n => n.id !== notification.id))
+                                      }
+                                    } catch (error) {
+                                      console.error('Error deleting notification:', error)
+                                    }
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-slate-100">

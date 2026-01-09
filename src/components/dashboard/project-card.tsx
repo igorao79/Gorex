@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Calendar, Settings, Trash2 } from "lucide-react"
+import { Users, Calendar, Settings, Trash2, AlertTriangle } from "lucide-react"
 import { ProjectDetailsModal } from "./project-details-modal"
 import {
   AlertDialog,
@@ -30,6 +30,17 @@ function getMembersText(count: number): string {
   }
 }
 
+// Функция для правильного склонения слова "задача"
+function getTasksText(count: number): string {
+  if (count % 10 === 1 && count % 100 !== 11) {
+    return `${count} задача`
+  } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+    return `${count} задачи`
+  } else {
+    return `${count} задач`
+  }
+}
+
 interface Project {
   id: string
   name: string
@@ -44,6 +55,7 @@ interface Project {
   _count: {
     members: number
     tasks: number
+    overdueTasks: number
   }
 }
 
@@ -55,6 +67,7 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, userId, onUpdate, onMemberCountChange }: ProjectCardProps) {
+
   const [showDetails, setShowDetails] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -123,10 +136,16 @@ export function ProjectCard({ project, userId, onUpdate, onMemberCountChange }: 
             </div>
           </div>
           <div className="flex items-center justify-between mb-3">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">
-                {project._count.tasks} задач
+                {getTasksText(project._count.tasks)}
               </Badge>
+              {project._count.overdueTasks > 0 && (
+                <Badge variant="destructive" className="flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  {project._count.overdueTasks} просрочено
+                </Badge>
+              )}
               <Badge
                 variant={project.status === "ACTIVE" ? "default" : project.status === "COMPLETED" ? "secondary" : "outline"}
                 className={

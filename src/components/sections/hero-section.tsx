@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -55,6 +54,7 @@ function TypewriterText() {
 
 export function HeroSection() {
   const { data: session } = useSession()
+
   return (
     <motion.section
       className="py-15 px-4"
@@ -104,25 +104,18 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.0 }}
           >
-            <Button size="lg" asChild>
-              <Link href="/pricing">Начать бесплатно</Link>
-            </Button>
             {!session?.user && (
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button variant="outline" size="lg" onClick={() => {
-                  const event = new CustomEvent('open-signin-modal')
-                  window.dispatchEvent(event)
-                }}>
-                  Войти в аккаунт
-                </Button>
-                <Button size="lg" onClick={() => {
+              <Button
+                size="lg"
+                onClick={() => {
                   const event = new CustomEvent('open-signup-modal')
                   window.dispatchEvent(event)
-                }}>
-                  Создать аккаунт
-                </Button>
-              </div>
+                }}
+              >
+                Начать бесплатно
+              </Button>
             )}
+
           </motion.div>
         </motion.div>
 

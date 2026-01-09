@@ -178,3 +178,4 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
     </Dialog>
   )
 }
+

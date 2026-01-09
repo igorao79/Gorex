@@ -22,6 +22,7 @@ interface Project {
   _count: {
     members: number
     tasks: number
+    overdueTasks: number
   }
 }
 
@@ -36,6 +37,7 @@ export function ProjectGrid({ userId, refreshTrigger }: ProjectGridProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>("ALL")
+  const [refreshCounter, setRefreshCounter] = useState(0)
 
   // Фильтруем проекты по статусу
   const filteredProjects = useMemo(() => {
@@ -96,7 +98,7 @@ export function ProjectGrid({ userId, refreshTrigger }: ProjectGridProps) {
   const fetchProjects = async () => {
     try {
       setIsRefreshing(true)
-      const response = await fetch("/api/projects")
+      const response = await fetch("/api/dashboard/projects")
       if (response.ok) {
         const projectsData = await response.json()
         setProjects(projectsData)
@@ -108,6 +110,11 @@ export function ProjectGrid({ userId, refreshTrigger }: ProjectGridProps) {
       setIsLoading(false)
       setIsRefreshing(false)
     }
+  }
+
+  const handleProjectUpdate = () => {
+    setRefreshCounter(prev => prev + 1)
+    fetchProjects()
   }
 
   const handleMemberCountChange = (projectId: string, newCount: number) => {
@@ -215,7 +222,7 @@ export function ProjectGrid({ userId, refreshTrigger }: ProjectGridProps) {
             key={project.id}
             project={project}
             userId={userId}
-            onUpdate={fetchProjects}
+            onUpdate={handleProjectUpdate}
             onMemberCountChange={handleMemberCountChange}
           />
         ))}
