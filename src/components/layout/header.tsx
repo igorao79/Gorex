@@ -35,7 +35,7 @@ export function Header() {
     // Сессия обновится автоматически через SessionProvider
   }
 
-  // Handle contact modal events and session updates
+  // Handle modal events and session updates
   useEffect(() => {
     const handleOpenContact = () => {
       if (session?.user) {
@@ -45,16 +45,28 @@ export function Header() {
       }
     }
 
+    const handleOpenSignIn = () => {
+      setShowSignIn(true)
+    }
+
+    const handleOpenSignUp = () => {
+      setShowSignUp(true)
+    }
+
     const handleSessionUpdate = async () => {
       // Обновляем сессию для получения актуального тарифа
       await update()
     }
 
     window.addEventListener('open-contact-modal', handleOpenContact)
+    window.addEventListener('open-signin-modal', handleOpenSignIn)
+    window.addEventListener('open-signup-modal', handleOpenSignUp)
     window.addEventListener('session-update', handleSessionUpdate)
 
     return () => {
       window.removeEventListener('open-contact-modal', handleOpenContact)
+      window.removeEventListener('open-signin-modal', handleOpenSignIn)
+      window.removeEventListener('open-signup-modal', handleOpenSignUp)
       window.removeEventListener('session-update', handleSessionUpdate)
     }
   }, [session?.user, update])

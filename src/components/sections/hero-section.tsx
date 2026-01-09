@@ -108,12 +108,20 @@ export function HeroSection() {
               <Link href="/pricing">Начать бесплатно</Link>
             </Button>
             {!session?.user && (
-              <Button variant="outline" size="lg" onClick={() => {
-                const event = new CustomEvent('open-signin-modal')
-                window.dispatchEvent(event)
-              }}>
-                Войти в аккаунт
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button variant="outline" size="lg" onClick={() => {
+                  const event = new CustomEvent('open-signin-modal')
+                  window.dispatchEvent(event)
+                }}>
+                  Войти в аккаунт
+                </Button>
+                <Button size="lg" onClick={() => {
+                  const event = new CustomEvent('open-signup-modal')
+                  window.dispatchEvent(event)
+                }}>
+                  Создать аккаунт
+                </Button>
+              </div>
             )}
           </motion.div>
         </motion.div>

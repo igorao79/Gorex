@@ -36,7 +36,9 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
         clearTimeout(emailTimeoutRef.current)
         emailTimeoutRef.current = null
       }
-      // Сбрасываем состояния
+      // Сбрасываем состояния и поля формы
+      setEmail("")
+      setPassword("")
       setError("")
       setEmailMessage("")
       setEmailMessageType("")
@@ -64,6 +66,9 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
   const handleEmailChange = (newEmail: string) => {
     setEmail(newEmail)
     setError("")
+    // Очищаем сообщения валидации email при новом вводе
+    setEmailMessage("")
+    setEmailMessageType("")
 
     // Очищаем предыдущий таймаут
     if (emailTimeoutRef.current) {

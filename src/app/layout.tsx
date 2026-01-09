@@ -8,7 +8,7 @@ import { ViewTransitions } from "next-view-transitions";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Gorex - Командный Task-менеджер",
+  title: "Gorex",
   description: "Управляйте задачами вашей команды с помощью Kanban-доски",
 };
 
