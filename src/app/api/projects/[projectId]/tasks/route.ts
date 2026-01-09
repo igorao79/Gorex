@@ -94,6 +94,20 @@ export async function POST(
       )
     }
 
+    // Проверяем, что дедлайн не может быть в прошлом
+    if (deadline) {
+      const deadlineDate = new Date(deadline)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0) // Устанавливаем начало дня
+
+      if (deadlineDate < today) {
+        return NextResponse.json(
+          { error: "Дедлайн не может быть в прошлом" },
+          { status: 400 }
+        )
+      }
+    }
+
     // Проверяем, что пользователь является участником проекта
     const membership = await prisma.projectMember.findFirst({
       where: {

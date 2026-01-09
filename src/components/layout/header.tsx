@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useReducer } from "react"
 import { Link } from "next-view-transitions"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,9 @@ export function Header() {
   const [showContact, setShowContact] = useState(false)
   const [currentTarif, setCurrentTarif] = useState<string | null>(null)
   const [notifications, setNotifications] = useState<{id: string, message: string, type: string, createdAt: string}[]>([])
+  const [notificationCount, setNotificationCount] = useState(0)
+  const [bellShake, setBellShake] = useState(false)
+  const [, forceUpdate] = useReducer(x => x + 1, 0)
   const prevUserIdRef = useRef<string | null>(null)
 
   // Управление скроллом body при открытии/закрытии мобильного меню
@@ -66,6 +69,57 @@ export function Header() {
       }
     } catch (error) {
       console.error('Error fetching user tarif:', error)
+    }
+  }, [session?.user])
+
+
+  // Подписка на обновление уведомлений в реальном времени
+  useEffect(() => {
+    const handleNotificationUpdate = async () => {
+      console.log('handleNotificationUpdate called, session:', !!session?.user)
+      // Проверяем сессию перед запросом
+      if (!session?.user) return
+
+      try {
+        const response = await fetch('/api/user/notifications')
+        console.log('Notifications API response status:', response.status)
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Notifications data received:', data.length, 'items')
+          console.log('Setting notifications:', data)
+          setNotifications(data)
+          setNotificationCount(data.length)
+
+          // Если количество уведомлений увеличилось, добавить анимацию колокольчика
+          if (data.length > notificationCount) {
+            setBellShake(true)
+            // Убрать анимацию через 1 секунду
+            setTimeout(() => setBellShake(false), 1000)
+          }
+
+          forceUpdate() // Принудительное обновление компонента
+          console.log('State updated, notificationCount:', data.length)
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+      }
+    }
+
+    // Подписываемся на событие обновления уведомлений (без условий)
+    const notificationHandler = () => {
+      console.log('Notification update event received!')
+      handleNotificationUpdate()
+    }
+    window.addEventListener('notifications-update', notificationHandler)
+
+    // Более частый polling для real-time эффекта (раз в 10 секунд)
+    const interval = setInterval(() => {
+      if (session?.user) handleNotificationUpdate()
+    }, 10000)
+
+    return () => {
+      window.removeEventListener('notifications-update', notificationHandler)
+      clearInterval(interval)
     }
   }, [session?.user])
 
@@ -125,7 +179,10 @@ export function Header() {
         // Получаем уведомления
         fetch('/api/user/notifications')
           .then(response => response.ok ? response.json() : [])
-          .then(data => setNotifications(data))
+          .then(data => {
+            setNotifications(data)
+            setNotificationCount(data.length)
+          })
           .catch(error => console.error('Error fetching notifications:', error))
       } else {
         // Используем setTimeout для избежания cascading renders
@@ -270,18 +327,18 @@ export function Header() {
                   <ModeToggle />
 
                   {/* Notifications Dropdown */}
-                  <DropdownMenu>
+                  <DropdownMenu key={notificationCount}>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="relative h-8 w-8 rounded-full hover:bg-slate-100"
                       >
-                        <Bell className="h-4 w-4" />
+                        <Bell className={`h-4 w-4 ${bellShake ? 'bell-shake' : ''}`} />
                         {notifications.length > 0 && (
-                          <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                            {notifications.length > 9 ? '9+' : notifications.length}
-                          </span>
+                        <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                          {notificationCount > 10 ? '10+' : notificationCount}
+                        </span>
                         )}
                       </Button>
                     </DropdownMenuTrigger>

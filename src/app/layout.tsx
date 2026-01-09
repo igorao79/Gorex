@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <ViewTransitions>
       <html lang="ru" suppressHydrationWarning>
-        <body className={`${inter.className} antialiased`}>
+        <body className={`${inter.className} antialiased min-h-screen flex flex-col`}>
           <ThemeProvider
             attribute="class"
             defaultTheme="light"

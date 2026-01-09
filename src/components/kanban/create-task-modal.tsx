@@ -107,6 +107,9 @@ export function CreateTaskModal({
         setPriority("MEDIUM")
         setAssigneeId("")
         setDeadline(undefined)
+        // Уведомляем о создании уведомления
+        console.log('Dispatching notifications-update event from create-task-modal')
+        window.dispatchEvent(new CustomEvent('notifications-update'))
       } else {
       }
     } catch (error) {
@@ -208,6 +211,11 @@ export function CreateTaskModal({
                   selected={deadline}
                   onSelect={setDeadline}
                   initialFocus
+                  disabled={(date) => {
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    return date < today
+                  }}
                 />
               </PopoverContent>
             </Popover>

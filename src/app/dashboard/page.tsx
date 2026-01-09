@@ -141,7 +141,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted">
         <Header />
-        <main className="container mx-auto px-4 py-8">
+        <main className="flex-1 overflow-hidden container mx-auto px-4 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-muted rounded w-64 mb-4"></div>
             <div className="h-4 bg-muted rounded w-96 mb-8"></div>
@@ -161,7 +161,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted relative">
+
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">

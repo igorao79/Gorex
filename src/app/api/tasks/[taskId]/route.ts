@@ -86,6 +86,20 @@ export async function PUT(
       )
     }
 
+    // Проверяем, что дедлайн не может быть в прошлом
+    if (deadline !== undefined && deadline) {
+      const deadlineDate = new Date(deadline)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (deadlineDate < today) {
+        return NextResponse.json(
+          { error: "Дедлайн не может быть в прошлом" },
+          { status: 400 }
+        )
+      }
+    }
+
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {

@@ -175,6 +175,10 @@ export function ProjectGrid({ userId, refreshTrigger }: ProjectGridProps) {
                 name: "Вы", // Current user is the creator
                 email: "", // We don't need email here
               },
+              _count: {
+                ...newProject._count,
+                overdueTasks: 0, // New projects have no overdue tasks
+              },
             }
             setProjects(prev => [...prev, fullProject])
             setShowCreateModal(false)
@@ -239,6 +243,10 @@ export function ProjectGrid({ userId, refreshTrigger }: ProjectGridProps) {
             creator: {
               name: "Вы", // Current user is the creator
               email: "", // We don't need email here
+            },
+            _count: {
+              ...newProject._count,
+              overdueTasks: 0, // New projects have no overdue tasks
             },
           }
           setProjects(prev => [...prev, fullProject])

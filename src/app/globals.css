@@ -208,4 +208,20 @@
   p, span, div, li, td, th, label, input, textarea, button {
     font-family: inherit;
   }
+
+  /* Prevent overscroll behavior during drag */
+  .dnd-context {
+    overscroll-behavior: contain;
+  }
+
+  /* Bell shake animation */
+  .bell-shake {
+    animation: bell-shake 0.5s ease-in-out;
+  }
+
+  @keyframes bell-shake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-15deg); }
+    75% { transform: rotate(15deg); }
+  }
 }

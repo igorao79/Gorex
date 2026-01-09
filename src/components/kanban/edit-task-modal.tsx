@@ -128,6 +128,8 @@ export function EditTaskModal({
       if (response.ok) {
         onTaskUpdated()
         onClose()
+        // Уведомляем о возможном создании уведомления
+        window.dispatchEvent(new CustomEvent('notifications-update'))
       } else {
       }
     } catch (error) {
@@ -272,6 +274,11 @@ export function EditTaskModal({
                   selected={deadline}
                   onSelect={setDeadline}
                   initialFocus
+                  disabled={(date) => {
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    return date < today
+                  }}
                 />
               </PopoverContent>
             </Popover>

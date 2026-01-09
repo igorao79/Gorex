@@ -77,7 +77,7 @@ export function KanbanColumn({ id, title, tasks, count, onEditTask, onDeleteTask
       className={`
         flex flex-col min-h-[600px] border-2 rounded-lg p-4 transition-all duration-300 ease-out
         ${getColumnColor(id)}
-        ${isOver ? "ring-2 ring-primary ring-opacity-50 scale-[1.02] shadow-lg bg-primary/5" : ""}
+        ${isOver ? "ring-opacity-50 shadow-lg " : ""}
       `}
     >
       <div className="flex items-center justify-between mb-4">

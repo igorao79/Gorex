@@ -239,16 +239,16 @@ export function KanbanBoard({
         </Button>
       </div>
 
-      <div className="relative">
+      <div className="relative dnd-context h-full overflow-hidden overscroll-contain">
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         collisionDetection={rectIntersection}
-        modifiers={[restrictToWindowEdges]}
+        modifiers={[]}
         autoScroll={false}
       >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 min-h-full">
           <KanbanColumn
             id="TODO"
             title="К выполнению"
@@ -283,7 +283,15 @@ export function KanbanBoard({
           />
         </div>
 
-        <DragOverlay dropAnimation={dropAnimation}>
+        <DragOverlay
+          dropAnimation={dropAnimation}
+          modifiers={[restrictToWindowEdges]}
+          style={{
+            maxWidth: '100vw',
+            maxHeight: '100vh',
+            pointerEvents: 'none'
+          }}
+        >
           {activeTask ? (
             <TaskCard
               task={activeTask}

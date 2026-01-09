@@ -126,6 +126,21 @@ export async function POST(
             email: true,
           },
         },
+        project: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    })
+
+    // Создаем уведомление о добавлении на проект
+    await prisma.notification.create({
+      data: {
+        message: `Вас добавили в проект "${newMember.project.name}"`,
+        type: 'project_invitation',
+        userId: userToInvite.id,
       },
     })
 

@@ -59,7 +59,6 @@ export async function GET() {
       return {
         ...project,
         _count: {
-          ...project._count,
           members: project.members.length,
           tasks: project.tasks.length,
           overdueTasks

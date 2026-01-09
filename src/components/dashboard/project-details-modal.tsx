@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Users, Mail, Crown, User, Settings, X, Edit, Check, X as XIcon } from "lucide-react"
@@ -73,6 +72,9 @@ export function ProjectDetailsModal({
   const [inviteEmail, setInviteEmail] = useState("")
   const [isInviting, setIsInviting] = useState(false)
   const [inviteError, setInviteError] = useState("")
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false)
+  const [emailValid, setEmailValid] = useState<boolean | null>(null)
+  const [emailUser, setEmailUser] = useState<{name: string | null, email: string} | null>(null)
   const [isLoadingMembers, setIsLoadingMembers] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(project.name)
@@ -105,6 +107,62 @@ export function ProjectDetailsModal({
       console.error('Error fetching user tarif:', error)
     }
   }, [])
+
+  const checkEmail = useCallback(async (email: string) => {
+    if (!email || !email.includes('@')) {
+      setEmailValid(null)
+      setEmailUser(null)
+      return
+    }
+
+    // Проверяем, не является ли пользователь уже участником проекта
+    const isAlreadyMember = members.some(member => member.user.email.toLowerCase() === email.toLowerCase())
+
+    if (isAlreadyMember) {
+      setEmailValid(false)
+      setEmailUser(null)
+      setIsCheckingEmail(false)
+      return
+    }
+
+    setIsCheckingEmail(true)
+    try {
+      const response = await fetch('/api/check-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setEmailValid(data.exists)
+        setEmailUser(data.exists ? data.user : null)
+      } else {
+        setEmailValid(false)
+        setEmailUser(null)
+      }
+    } catch (error) {
+      console.error('Error checking email:', error)
+      setEmailValid(false)
+      setEmailUser(null)
+    } finally {
+      setIsCheckingEmail(false)
+    }
+  }, [members])
+
+  const handleEmailChange = (email: string) => {
+    setInviteEmail(email)
+    setInviteError("")
+    setEmailValid(null)
+    setEmailUser(null)
+
+    // Debounced email check - wait 1.5 seconds after user stops typing
+    const timeoutId = setTimeout(() => checkEmail(email), 1500)
+    return () => clearTimeout(timeoutId)
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -140,6 +198,9 @@ export function ProjectDetailsModal({
         setInviteEmail("")
         onUpdate() // Refresh projects list
         onMemberCountChange?.(members.length + 1) // Update member count immediately
+        // Уведомляем о создании уведомления
+        console.log('Dispatching notifications-update event from project-details-modal')
+        window.dispatchEvent(new CustomEvent('notifications-update'))
       } else {
         const error = await response.json()
         setInviteError(error.error || "Ошибка при приглашении")
@@ -241,7 +302,7 @@ export function ProjectDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
+      <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto sm:max-w-[600px] md:max-w-[800px] md:max-h-[800px] lg:max-w-[900px] lg:max-h-[85vh] p-3 sm:p-4 md:p-6">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
@@ -307,58 +368,66 @@ export function ProjectDetailsModal({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Project Stats */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Участники</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{project._count.members}</div>
-                {userTarif && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {(() => {
-                      const limits = {
-                        free: 5,
-                        prof: 25,
-                        corp: '∞'
-                      }
-                      const limit = limits[userTarif as keyof typeof limits] || 5
-                      const current = project._count.members
-                      const isNearLimit = typeof limit === 'number' && current >= limit * 0.8
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          {/* Left Column: Project Stats */}
+          <div>
+            <h3 className="text-base md:text-lg font-heading mb-3 md:mb-4">Статистика проекта</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 gap-2 md:gap-2 lg:gap-3">
+            <div className="bg-muted/30 rounded-lg p-2 md:p-3">
+              <div className="text-xs text-muted-foreground mb-1">Участники</div>
+              <div className="text-base md:text-lg font-semibold">{project._count.members}</div>
+              {userTarif && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  {(() => {
+                    const limits = {
+                      free: 5,
+                      prof: 25,
+                      corp: '∞'
+                    }
+                    const limit = limits[userTarif as keyof typeof limits] || 5
+                    const current = project._count.members
+                    const isNearLimit = typeof limit === 'number' && current >= limit * 0.8
 
-                      return (
-                        <span className={isNearLimit ? 'text-yellow-600' : ''}>
-                          Лимит: {current}/{limit}
-                          {isNearLimit && ' (почти достигнут)'}
-                        </span>
-                      )
-                    })()}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Задачи</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{getTasksText(project._count.tasks)}</div>
-                {project._count.overdueTasks > 0 && (
-                  <div className="text-sm text-red-600 mt-1 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                    {project._count.overdueTasks} просрочено
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    return (
+                      <span className={isNearLimit ? 'text-yellow-600' : ''}>
+                        {current}/{limit}
+                      </span>
+                    )
+                  })()}
+                </div>
+              )}
+            </div>
+            <div className="bg-muted/30 rounded-lg p-2 md:p-3">
+              <div className="text-xs text-muted-foreground mb-1">Задачи</div>
+              <div className="text-lg font-semibold">{getTasksText(project._count.tasks)}</div>
+              {project._count.overdueTasks > 0 && (
+                <div className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                  {project._count.overdueTasks} просрочено
+                </div>
+              )}
+            </div>
+
+            {/* Status - показывается только на больших экранах */}
+            <div className="hidden lg:block bg-muted/30 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground mb-1">Статус</div>
+              <div className="text-sm font-medium">{project.status === 'ACTIVE' ? 'Активный' : project.status === 'COMPLETED' ? 'Завершен' : 'Архивирован'}</div>
+            </div>
+
+            {/* Created date - показывается только на больших экранах */}
+            <div className="hidden lg:block bg-muted/30 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground mb-1">Создан</div>
+              <div className="text-sm font-medium">{new Date(project.createdAt).toLocaleDateString("ru-RU")}</div>
+            </div>
+          </div>
           </div>
 
-          {/* Project Status */}
+          {/* Right Column: Project Management */}
+          <div className="space-y-4">
+            {/* Project Status */}
           {isAdmin && (
             <div>
-              <h3 className="text-lg font-heading mb-4 flex items-center">
+              <h3 className="text-base md:text-lg font-heading mb-3 md:mb-4 flex items-center">
                 <Settings className="w-5 h-5 mr-2 flex-shrink-0" />
                 <span className="truncate">Статус проекта</span>
               </h3>
@@ -398,7 +467,7 @@ export function ProjectDetailsModal({
                 ))}
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="max-h-24 md:max-h-32 overflow-y-auto space-y-2">
                 {members.map((member) => (
                   <div key={member.id} className="flex flex-col gap-2 p-3 rounded-lg bg-muted/30 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-3">
@@ -420,17 +489,17 @@ export function ProjectDetailsModal({
                         {member.role === "admin" ? (
                           <>
                             <Crown className="w-3 h-3 mr-1" />
-                            Админ
+                            <span className="sm:inline md:hidden">Админ</span>
                           </>
                         ) : (
                           <>
                             <User className="w-3 h-3 mr-1" />
-                            Участник
+                            <span className="sm:inline md:hidden">Участник</span>
                           </>
                         )}
                       </Badge>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground/70">
+                        <span className="text-xs text-muted-foreground/70 sm:inline md:hidden">
                           {new Date(member.joinedAt).toLocaleDateString("ru-RU")}
                         </span>
                         {isAdmin && member.role !== "admin" && member.user.id !== userId && (
@@ -454,7 +523,7 @@ export function ProjectDetailsModal({
           {/* Invite Form - only for admins */}
           {isAdmin && (
             <div>
-              <h3 className="text-lg font-heading mb-4 flex items-center">
+              <h3 className="text-base md:text-lg font-heading mb-3 md:mb-4 flex items-center">
                 <Mail className="w-5 h-5 mr-2 flex-shrink-0" />
                 <span className="truncate">Пригласить участника</span>
               </h3>
@@ -483,21 +552,67 @@ export function ProjectDetailsModal({
                 </div>
               ) : (
                 <form onSubmit={handleInvite} className="space-y-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
-                    <div className="flex-1">
-                      <Label htmlFor="invite-email" className="mb-2 block">Email пользователя</Label>
-                      <Input
-                        id="invite-email"
-                        type="email"
-                        placeholder="user@example.com"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                        required
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <Button type="submit" disabled={isInviting} className="w-full sm:w-auto">
+                  <div className="space-y-4">
+                    <Label htmlFor="invite-email">Email пользователя</Label>
+                    <div className="flex gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="relative">
+                          <Input
+                            id="invite-email"
+                            type="email"
+                            placeholder="user@example.com"
+                            value={inviteEmail}
+                            onChange={(e) => handleEmailChange(e.target.value)}
+                            required
+                            className={`${emailValid === false ? 'border-red-500 focus:border-red-500' : emailValid === true ? 'border-green-500 focus:border-green-500' : ''}`}
+                          />
+                          {isCheckingEmail && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                            </div>
+                          )}
+                          {!isCheckingEmail && emailValid !== null && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              {emailValid ? (
+                                <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                  <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                  <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 011.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414l-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 011.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {/* Фиксированная высота для сообщений валидации */}
+                        <div className="h-5 mt-1 overflow-hidden">
+                          {emailValid === false && (
+                            <p className="text-sm text-red-600 leading-tight">
+                              {(() => {
+                                const isAlreadyMember = members.some(member => member.user.email.toLowerCase() === inviteEmail.toLowerCase())
+                                return isAlreadyMember
+                                  ? "Этот пользователь уже является участником проекта"
+                                  : "Пользователь с таким email не найден"
+                              })()}
+                            </p>
+                          )}
+                          {emailValid === true && emailUser && (
+                            <p className="text-sm text-green-600 leading-tight">
+                              Найден: {emailUser.name || emailUser.email}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={isInviting || emailValid !== true}
+                        className="whitespace-nowrap"
+                      >
                         {isInviting ? "Приглашение..." : "Пригласить"}
                       </Button>
                     </div>
@@ -509,6 +624,7 @@ export function ProjectDetailsModal({
               )}
             </div>
           )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
