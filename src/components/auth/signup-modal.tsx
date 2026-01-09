@@ -148,7 +148,7 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-md mx-auto">
+      <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Регистрация в Gorex</DialogTitle>
           <DialogDescription>
@@ -177,6 +177,7 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              className="w-full"
             />
           </div>
 
@@ -188,6 +189,7 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
               value={email}
               onChange={(e) => handleEmailChange(e.target.value)}
               required
+              className="w-full"
             />
             {checkingEmail && (
               <p className="text-sm text-muted-foreground">Проверка email...</p>
@@ -208,15 +210,16 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="w-full"
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+          <div className="flex flex-col-reverse sm:flex-row justify-between items-stretch sm:items-center gap-3">
             <Button
               type="button"
               variant="ghost"
               onClick={onSwitchToSignIn}
-              className="text-sm"
+              className="text-sm w-full sm:w-auto"
             >
               Уже есть аккаунт? Войти
             </Button>

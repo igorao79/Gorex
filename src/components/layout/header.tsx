@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu } from "lucide-react"
+import { Menu, LogIn } from "lucide-react"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ModeToggle } from "@/components/mode-toggle"
@@ -240,15 +240,31 @@ export function Header() {
                 </DropdownMenu>
                 </div>
               ) : (
-                <div className="hidden md:flex items-center space-x-2">
-                  <ModeToggle />
-                  <Button variant="ghost" onClick={() => setShowSignIn(true)}>
-                    Войти
-                  </Button>
-                  <Button onClick={() => setShowSignUp(true)}>
-                    Регистрация
-                  </Button>
-                </div>
+                <>
+                  {/* Desktop Auth Buttons */}
+                  <div className="hidden md:flex items-center space-x-2">
+                    <ModeToggle />
+                    <Button variant="ghost" onClick={() => setShowSignIn(true)}>
+                      Войти
+                    </Button>
+                    <Button onClick={() => setShowSignUp(true)}>
+                      Регистрация
+                    </Button>
+                  </div>
+
+                  {/* Mobile Auth Button */}
+                  <div className="flex md:hidden items-center space-x-2">
+                    <ModeToggle />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowSignIn(true)}
+                      className="rounded-full px-3 py-2 transition-colors"
+                    >
+                      <LogIn className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
               )}
             </div>
           </div>

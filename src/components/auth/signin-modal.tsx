@@ -52,7 +52,7 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[95vw] max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle>Вход в Gorex</DialogTitle>
           <DialogDescription>
@@ -75,6 +75,7 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="w-full"
             />
           </div>
 
@@ -86,18 +87,20 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="w-full"
             />
           </div>
 
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
             <Button
               type="button"
               variant="ghost"
               onClick={onSwitchToSignUp}
+              className="text-sm"
             >
               Нет аккаунта? Зарегистрироваться
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="flex-1 sm:flex-initial">
               {isLoading ? "Вход..." : "Войти"}
             </Button>
           </div>
